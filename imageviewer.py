@@ -1,11 +1,13 @@
+import threading
 import tkinter as tk
 from tkinter import filedialog
+from turtle import done
 from PIL import Image
 from utils import ImageState, ImageProcessor, UndoManager
-from toolbar import Toolbar
+from toolbar import BUTTON_STYLE, Toolbar
 from canvas import CanvasView
 from sidebar import Sidebar
-
+from constant import FONT, BLACK_COLOR, YELLOW_COLOR
 class ImageViewer(tk.Frame):
 	def __init__(self, parent, controller):
 			super().__init__(parent)
@@ -26,8 +28,17 @@ class ImageViewer(tk.Frame):
 					"crop":    self.enable_crop,
 					"undo":    self.undo,
 					"toggle_enhance_mode": self.toggle_enhance_mode,
-					"remove_bg": self.remove_background
+					"remove_bg": self.remove_background,
+					"describe": self.describe_image
 			}
+
+			self.description = tk.Frame(self, padx=20, pady=20, bg=BLACK_COLOR)
+			self.description.place(relx=0.95, rely=0.1, anchor="ne")
+
+			self.description_label = tk.Label(self.description, text="", font=FONT, bg=BLACK_COLOR, fg="#ffffff", wraplength=300, justify="left")
+			self.description_label.pack()
+
+			tk.Button(self.description, text="Close", command=self.hide_description, **BUTTON_STYLE).pack(pady=(10,0))
 			
 			self.sidebar = Sidebar(self, on_change=self._apply_enhancements, reset_callback = self._reset_enhancements)
 			self.sidebar.place(relx=0.95, rely=0.5, anchor="e")
@@ -41,9 +52,11 @@ class ImageViewer(tk.Frame):
 	def toggle_enhance_mode(self):
 		if (self.state.enhancement_mode_enabled):
 			self.state.enhancement_mode_enabled = False
+			self.toolbar.toggle_state("toggle_enhance_mode", enabled=False)
 			self._hide_sidebar()
 		else:
 			self.state.enhancement_mode_enabled = True
+			self.toolbar.toggle_state("toggle_enhance_mode", enabled=True)
 			self._show_sidebar()
 	
 	def _show_sidebar(self):
@@ -80,6 +93,26 @@ class ImageViewer(tk.Frame):
 
 		self.canvas_view.display(self.state.current)
 
+	def describe_image(self):
+		if not self.state.current:
+			return
+		
+		self.toolbar.toggle_state("describe", enabled=True)
+		self.display_description("Generating description...")
+
+		description = self.processor.describe_image(self.state.current)
+		self.display_description(description)
+
+		self.toolbar.toggle_state("describe", enabled=False)
+
+	def display_description(self, description):
+		self.description_label.config(text=description)
+		self.description.tkraise()
+		self.description_label.update_idletasks()
+
+	def hide_description(self):
+		self.description.lower()
+		self.description_label.config(text="")
 
 	def open_image(self, path=None):
 			if not path:
@@ -171,6 +204,7 @@ class ImageViewer(tk.Frame):
 		if not self.state.current: return
 			
 		# Enable crop mode on canvas
+		self.toolbar.toggle_state("crop", enabled=True)
 		self.canvas_view.enable_crop_mode(self._on_crop_complete)
 
 	def _on_crop_complete(self, crop_box):
@@ -178,6 +212,8 @@ class ImageViewer(tk.Frame):
 		if not self.state.current:
 			return
 		
+		self.toolbar.toggle_state("crop", enabled=False)
+
 		# Save current state for undo
 		self.undo_mgr.push(self.state.current)
 

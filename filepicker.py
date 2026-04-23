@@ -11,10 +11,12 @@ class FilePicker(tk.Frame):
 
 	def _build_ui(self):
 			tk.Label(self, text="[SIMPLE IMAGE VIEWER & EDITOR]", font=(FONT_FAMILY, 20, "bold"), fg=YELLOW_COLOR, bg=BLACK_COLOR).pack(padx=4, pady=(72, 24))
+			tk.Label(self, text="By [TEAM 01]", font=(FONT_FAMILY, 16, "bold"), fg="#ffffff", bg=BLACK_COLOR).pack(padx=4, pady=(0, 16))
+			tk.Label(self, text="Ashish Adhikari | Shubham Adhikari | Biraj Danuwar", font=(FONT_FAMILY, 14, "bold"), fg="#b9b9b9", bg=BLACK_COLOR).pack(padx=4, pady=(0, 32))
 
 			tk.Button(
 						self,
-						text="⤓ OPEN IMAGE",
+						text="📂 OPEN IMAGE",
 						command=self.controller["open_file"],
 						**BUTTON_STYLE
 				).pack(padx=4)

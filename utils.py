@@ -1,6 +1,9 @@
 from PIL import Image, ImageEnhance
 from rembg import remove
-
+from google import genai
+from google.genai import types
+from io import BytesIO
+import os
 class ImageState:
 	def __init__(self):
 		self.original: Image.Image | None = None
@@ -42,6 +45,30 @@ class ImageProcessor:
 	@staticmethod
 	def remove_background(img: Image.Image) -> Image.Image:
 		return remove(img)
+	
+	@staticmethod
+	def describe_image(img: Image.Image) -> str:
+		fmt = img.format or "PNG"
+		api_key = os.getenv("GOOGLE_API_KEY")
+		mime_type = f"image/{fmt.lower()}"
+		
+		buffer = BytesIO()
+		img.save(buffer, format=fmt)
+		image_bytes = buffer.getvalue()
+
+		client = genai.Client(api_key=api_key)
+		response = client.models.generate_content(
+			model='gemini-3-flash-preview',
+			contents=[
+				types.Part.from_bytes(
+					data=image_bytes,
+					mime_type=mime_type,
+				),
+				'Describe the content of this image in short. Max 5 sentences.'
+			]
+		)
+
+		return response.text
 
 class UndoManager:
 	def __init__(self, max_history=20):
