@@ -1,13 +1,12 @@
-import threading
 import tkinter as tk
-from tkinter import filedialog
-from turtle import done
+from tkinter import filedialog, messagebox
 from PIL import Image
 from utils import ImageState, ImageProcessor, UndoManager
 from toolbar import BUTTON_STYLE, Toolbar
 from canvas import CanvasView
 from sidebar import Sidebar
-from constant import FONT, BLACK_COLOR, YELLOW_COLOR
+from constant import FONT, BLACK_COLOR
+import os
 class ImageViewer(tk.Frame):
 	def __init__(self, parent, controller):
 			super().__init__(parent)
@@ -114,16 +113,37 @@ class ImageViewer(tk.Frame):
 		self.description.lower()
 		self.description_label.config(text="")
 
-	def open_image(self, path=None):
+	def open_image(self, path=None, show_frame=False):
 			if not path:
 				path = filedialog.askopenfilename()
+			
+			if not path:
+					return
 
-			if path:
+			supported_ext = {".png", ".jpg", ".jpeg", ".bmp", ".gif", ".tiff", ".webp"}
+			ext = os.path.splitext(path)[1].lower()
+
+			if ext not in supported_ext:
+					messagebox.showerror(
+							"Unsupported File",
+							f"File type '{ext}' is not supported."
+					)
+					return
+
+			try:
 					self.state.original = Image.open(path)
 					self.state.current = self.state.original.copy()
 					self.state.current_without_enhancements = self.state.original.copy()
 					
 					self._reset_enhancements()
+
+					if show_frame:
+						self.tkraise()
+
+			except Exception as e:
+					messagebox.showerror("Error", f"Failed to open image:\n{e}")
+
+					
 				
 	def flip_horizontal(self):
 			if not self.state.current: return

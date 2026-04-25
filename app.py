@@ -43,7 +43,6 @@ class App():
 		if path:
 			imageviewer = self.frames["ImageViewer"]	
 
-			imageviewer.open_image(path)
-			self.show_frame("ImageViewer")	
+			imageviewer.open_image(path, show_frame=True)
 
 
